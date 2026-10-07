@@ -1,14 +1,30 @@
-name: Deployment Test - Static Site to cPanel
+name: Deploy Static Site to cPanel
 
 on:
   push:
     branches:
-      - main
+      - main           # Deploys code to GreenGeeks when it lands on main
+  pull_request:
+    branches:
+      - main           # Runs validation tests automatically on Pull Requests
 
 jobs:
-  deploy:
+  validate-code:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
+      # Industry-standard HTML syntax validator
+      - name: Validate HTML Syntax
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: ./     # Tells it to scan your whole local folder layout
+
+  deploy:
+    needs: validate-code                    # BLOCKS deployment if validation crashes!
+    if: github.event_name == 'push'         # ONLY deploy on final merge to main
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -21,3 +37,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
           server-dir: ./day-04/
+
